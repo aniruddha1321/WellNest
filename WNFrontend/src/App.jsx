@@ -5,6 +5,9 @@ import Login from './components/Login'
 import Signup from './components/Signup'
 import Home from './components/Home'
 import ProtectedRoute from './components/ProtectedRoute'
+import ForgotPassword from './components/ForgotPassword'
+import ResetPassword from './components/ResetPassword'
+import UserProfile from './components/UserProfile'
 
 function App() {
   return (
@@ -13,6 +16,9 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/user-profile" element={<UserProfile />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/home" element={
             <ProtectedRoute>
               <Home />

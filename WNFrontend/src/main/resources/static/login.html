@@ -13,7 +13,10 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            /* WellNest themed background */
+            background: radial-gradient(1200px 600px at 10% 20%, rgba(26,162,96,0.04), transparent 10%),
+                        radial-gradient(800px 400px at 90% 80%, rgba(3,169,244,0.03), transparent 10%),
+                        linear-gradient(135deg, #f7fff8 0%, #f3fbff 50%, #fffaf5 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -35,13 +38,13 @@
         }
 
         .logo h1 {
-            color: #667eea;
+            color: #1aa260;
             font-size: 32px;
             margin-bottom: 5px;
         }
 
         .logo p {
-            color: #666;
+            color: #2b6f5a;
             font-size: 14px;
         }
 
@@ -67,24 +70,26 @@
 
         .form-group input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #1aa260;
+            box-shadow: 0 6px 18px rgba(26,162,96,0.06);
         }
 
         .btn {
             width: 100%;
             padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(90deg, #1aa260 0%, #10b981 60%);
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 16px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: transform 0.15s, box-shadow 0.15s;
         }
 
         .btn:hover {
             transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(16,185,129,0.08);
         }
 
         .btn:active {
@@ -105,7 +110,7 @@
         }
 
         .signup-link a {
-            color: #667eea;
+            color: #0ea5a6;
             text-decoration: none;
             font-weight: 600;
         }

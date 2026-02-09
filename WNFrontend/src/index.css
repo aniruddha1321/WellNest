@@ -6,5 +6,8 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #f5f7fa;
+  /* WellNest themed global background */
+  background: radial-gradient(1200px 600px at 10% 20%, rgba(26,162,96,0.04), transparent 10%),
+              radial-gradient(800px 400px at 90% 80%, rgba(3,169,244,0.03), transparent 10%),
+              linear-gradient(135deg, #f7fff8 0%, #f3fbff 50%, #fffaf5 100%);
 }
