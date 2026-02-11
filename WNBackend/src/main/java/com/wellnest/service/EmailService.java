@@ -14,6 +14,9 @@ public class EmailService {
     @Value("${frontend.url:http://localhost:3000}")
     private String frontendUrl;
 
+    @Value("${spring.mail.username:}")
+    private String mailFrom;
+
     @Autowired
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
@@ -39,13 +42,15 @@ public class EmailService {
         message.setTo(to);
         message.setSubject(subject);
         message.setText(text);
-        //message.setFrom("vallabh.punekara77@gmail.com");
+        if (mailFrom != null && !mailFrom.isBlank()) {
+            message.setFrom(mailFrom);
+        }
         try {
-        mailSender.send(message);
-        System.out.println("Email sent to: " + to);
-    } catch (Exception e) {
-        System.err.println("Email failed: " + e.getMessage());
-        throw e;
-    }
+            mailSender.send(message);
+            System.out.println("Email sent to: " + to);
+        } catch (Exception e) {
+            System.err.println("Email failed: " + e.getMessage());
+            throw e;
+        }
     }
 }

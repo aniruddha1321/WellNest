@@ -47,8 +47,11 @@ public class User {
     
     // Profile information
     private Integer age;
+    private String gender;
     private Double height; // in cm
     private Double weight; // in kg
+    private List<String> goals;
+    private String activityLevel;
     private List<String> recentHealthIssues;
     private List<String> pastHealthIssues;
     private Boolean profileCompleted;

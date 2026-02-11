@@ -13,8 +13,11 @@ public class ProfileResponse {
     private String fullName;
     private String email;
     private Integer age;
+    private String gender;
     private Double height;
     private Double weight;
+    private List<String> goals;
+    private String activityLevel;
     private List<String> recentHealthIssues;
     private List<String> pastHealthIssues;
     private Boolean profileCompleted;

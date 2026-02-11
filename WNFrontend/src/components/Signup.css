@@ -58,10 +58,37 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e6f3ec;
+  border-radius: 10px;
+  font-size: 14px;
+  background: white;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
 .form-group input:focus {
   outline: none;
   border-color: #1aa260;
   box-shadow: 0 6px 18px rgba(26,162,96,0.08);
+}
+
+.form-group select:focus {
+  outline: none;
+  border-color: #1aa260;
+  box-shadow: 0 6px 18px rgba(26,162,96,0.08);
+}
+
+/* Remove number input spinners */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
 }
 
 .btn {

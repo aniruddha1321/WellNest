@@ -26,8 +26,11 @@ public class ProfileService {
 
         User user = userOptional.get();
         user.setAge(request.getAge());
+        user.setGender(request.getGender());
         user.setHeight(request.getHeight());
         user.setWeight(request.getWeight());
+        user.setGoals(request.getGoals());
+        user.setActivityLevel(request.getActivityLevel());
         user.setRecentHealthIssues(request.getRecentHealthIssues());
         user.setPastHealthIssues(request.getPastHealthIssues());
         user.setProfileCompleted(true);
@@ -51,8 +54,11 @@ public class ProfileService {
         response.setFullName(user.getFullName());
         response.setEmail(user.getEmail());
         response.setAge(user.getAge());
+        response.setGender(user.getGender());
         response.setHeight(user.getHeight());
         response.setWeight(user.getWeight());
+        response.setGoals(user.getGoals());
+        response.setActivityLevel(user.getActivityLevel());
         response.setRecentHealthIssues(user.getRecentHealthIssues());
         response.setPastHealthIssues(user.getPastHealthIssues());
         response.setProfileCompleted(user.getProfileCompleted());
