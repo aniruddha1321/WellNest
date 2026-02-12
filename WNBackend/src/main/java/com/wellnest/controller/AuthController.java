@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -18,14 +19,10 @@ public class AuthController {
     private AuthService authService;
 
     @PostMapping("/signup")
-    public ResponseEntity<AuthResponse> signup(@RequestBody SignupRequest request) {
+    public ResponseEntity<AuthResponse> signup(@Valid @RequestBody SignupRequest request) {
         try {
             AuthResponse response = authService.signup(request);
-            
-            if (response.getToken() == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-            }
-            
+            // signup returns message and expects email verification; return 200 with response
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             e.printStackTrace();
@@ -35,7 +32,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
         
         if (response.getToken() == null) {
@@ -43,6 +40,41 @@ public class AuthController {
         }
         
         return ResponseEntity.ok(response);
+    }
+
+    @RequestMapping(value = "/verify-email", method = {RequestMethod.POST, RequestMethod.GET})
+    public ResponseEntity<AuthResponse> verifyEmail(@RequestParam String email, @RequestParam String code) {
+        AuthResponse response = authService.verifyEmail(email, code);
+        if (response.getToken() == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+        return ResponseEntity.ok(response);
+    }
+
+    @RequestMapping(value = "/send-verification", method = {RequestMethod.POST, RequestMethod.GET})
+    public ResponseEntity<AuthResponse> sendVerification(@RequestParam String email) {
+        AuthResponse response = authService.sendVerification(email);
+        if (response.getMessage() != null && response.getMessage().toLowerCase().contains("sent")) {
+            return ResponseEntity.ok(response);
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<AuthResponse> forgotPassword(@RequestParam String email) {
+        AuthResponse response = authService.forgotPassword(email);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<AuthResponse> resetPassword(@RequestParam String email,
+                                                      @RequestParam String code,
+                                                      @RequestParam String newPassword) {
+        AuthResponse response = authService.resetPassword(email, code, newPassword);
+        if (response.getMessage() != null && response.getMessage().toLowerCase().contains("successful")) {
+            return ResponseEntity.ok(response);
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @GetMapping("/test")

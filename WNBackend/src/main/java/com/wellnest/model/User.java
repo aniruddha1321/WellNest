@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -21,6 +22,9 @@ public class User {
     private String fullName;
     
     @Indexed(unique = true)
+    private String username;
+
+    @Indexed(unique = true)
     private String email;
     
     private String password;
@@ -33,6 +37,22 @@ public class User {
     
     private boolean active;
     
+    // Email verification code (OTP) and expiry
+    private String verificationCode;
+    private java.time.LocalDateTime verificationExpiry;
+
+    // Password reset code (OTP) and expiry
+    private String resetCode;
+    private java.time.LocalDateTime resetExpiry;
+    
+    // Profile information
+    private Integer age;
+    private Double height; // in cm
+    private Double weight; // in kg
+    private List<String> recentHealthIssues;
+    private List<String> pastHealthIssues;
+    private Boolean profileCompleted;
+    
     public User(String fullName, String email, String password) {
         this.fullName = fullName;
         this.email = email;
@@ -40,5 +60,6 @@ public class User {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
         this.active = true;
+        this.profileCompleted = false;
     }
 }
