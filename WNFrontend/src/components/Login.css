@@ -1,0 +1,122 @@
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.login-form {
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,255,250,0.95));
+  padding: 36px;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(6,46,22,0.08);
+  width: 100%;
+  max-width: 480px;
+  border: 1px solid rgba(10,80,50,0.04);
+}
+
+.logo {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.logo h1 {
+  color: #1aa260;
+  font-size: 32px;
+  margin-bottom: 5px;
+}
+
+.logo p {
+  color: #2b6f5a;
+  font-size: 14px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+  font-weight: 500;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e1e8ed;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #1aa260;
+  box-shadow: 0 6px 18px rgba(26,162,96,0.06);
+}
+.btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(90deg, #1aa260 0%, #10b981 60%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(16,185,129,0.08);
+}
+.btn:active {
+  transform: translateY(0);
+}
+.btn:active {
+  transform: translateY(0);
+}
+
+.divider {
+  text-align: center;
+  margin: 25px 0;
+  color: #999;
+  font-size: 14px;
+}
+
+.signup-link {
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+}
+
+.signup-link a {
+  color: #0ea5a6;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.signup-link a:hover {
+  text-decoration: underline;
+}
+
+.error-message {
+  background: #fee;
+  color: #c33;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.success-message {
+  background: #efe;
+  color: #3c3;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
