@@ -14,6 +14,7 @@ public class MailTestController {
 
     @GetMapping("/mail")
     public String testMail() {
+        // Simple test endpoint to verify email delivery pipeline.
         emailService.sendVerificationEmail(
             "vallabh.punekara77@gmail.com", 
             "999999"

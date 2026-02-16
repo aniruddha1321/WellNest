@@ -8,6 +8,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import ForgotPassword from './components/ForgotPassword'
 import ResetPassword from './components/ResetPassword'
 import UserProfile from './components/UserProfile'
+import Profile from './components/Profile'
 import VerifyEmail from './components/VerifyEmail'
 
 function App() {
@@ -19,6 +20,11 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/user-profile" element={<UserProfile />} />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          } />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/home" element={

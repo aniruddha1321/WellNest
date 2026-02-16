@@ -26,12 +26,14 @@ public class ProfileController {
         try {
             ProfileResponse response = profileService.updateProfile(email, request);
             Map<String, Object> result = new HashMap<>();
+            // Wrap response to keep a consistent API shape.
             result.put("data", response);
             result.put("message", "Profile updated successfully");
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             e.printStackTrace();
             Map<String, Object> errorResponse = new HashMap<>();
+            // Return error text without leaking stack details to clients.
             errorResponse.put("message", "Error: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
@@ -42,12 +44,14 @@ public class ProfileController {
         try {
             ProfileResponse response = profileService.getProfile(email);
             Map<String, Object> result = new HashMap<>();
+            // Use the same map structure as update for client consistency.
             result.put("data", response);
             result.put("message", "Profile retrieved successfully");
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             e.printStackTrace();
             Map<String, Object> errorResponse = new HashMap<>();
+            // Keep error payload minimal and consistent.
             errorResponse.put("message", "Error: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
