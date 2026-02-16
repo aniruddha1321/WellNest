@@ -81,6 +81,9 @@ public class AuthService {
         } 
 
         User user = userOptional.get(); // unwrap user
+        if (user.isActive()) { // skip already verified accounts
+            return new AuthResponse(null, user.getEmail(), user.getFullName(), "Account already verified. Please login.");
+        }
         String otp = generateOtp(); // generate new code
         user.setVerificationCode(otp); // set new code
         user.setVerificationExpiry(LocalDateTime.now().plusMinutes(15)); // set new expiry
@@ -126,6 +129,9 @@ public class AuthService {
         } 
 
         User user = userOptional.get(); // unwrap user
+        if (user.isActive()) { // prevent re-verification
+            return new AuthResponse(null, user.getEmail(), user.getFullName(), "Account already verified. Please login.");
+        }
         if (user.getVerificationCode() == null || user.getVerificationExpiry() == null) { 
             return new AuthResponse(null, null, null, "No verification code found"); 
         } 
