@@ -11,12 +11,12 @@ const Home = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
 
   const waterGoal = 8
-  const waterIntake = 0
+  const waterIntake = 6
   const waterPercent = Math.min(100, Math.round((waterIntake / waterGoal) * 100))
   const workoutTargetMinutes = 30
-  const workoutMinutes = 0
+  const workoutMinutes = 24
   const workoutPercent = Math.min(100, Math.round((workoutMinutes / workoutTargetMinutes) * 100))
-  const sleepHours = 0
+  const sleepHours = 7.2
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -43,6 +43,10 @@ const Home = () => {
 
   const handleSettingsClick = () => {
     setIsUserMenuOpen(false)
+  }
+
+  const handleTrackerNavigation = (path) => {
+    navigate(path)
   }
 
   const handleMenuToggle = () => {
@@ -177,7 +181,7 @@ const Home = () => {
                 <div className="progress-bar" style={{ width: `${workoutPercent}%` }} />
               </div>
               <div className="tracker-meta">{workoutMinutes} min logged</div>
-              <button className="ghost-btn">Log Workout</button>
+              <button className="ghost-btn" onClick={() => handleTrackerNavigation('/workout-tracker')}>Log Workout</button>
             </div>
 
             <div className="tracker-card">
@@ -193,7 +197,7 @@ const Home = () => {
                 <li><span>Lunch</span><strong>Not logged</strong></li>
                 <li><span>Dinner</span><strong>Not logged</strong></li>
               </ul>
-              <button className="ghost-btn">Add Meal</button>
+              <button className="ghost-btn" onClick={() => handleTrackerNavigation('/meal-tracker')}>Add Meal</button>
             </div>
 
             <div className="tracker-card">
@@ -208,7 +212,7 @@ const Home = () => {
                 <div className="progress-bar" style={{ width: `${waterPercent}%` }} />
               </div>
               <div className="tracker-meta">{waterIntake} / {waterGoal} glasses</div>
-              <button className="ghost-btn">Add Glass</button>
+              <button className="ghost-btn" onClick={() => handleTrackerNavigation('/water-intake')}>Add Glass</button>
             </div>
 
             <div className="tracker-card">
@@ -221,7 +225,7 @@ const Home = () => {
               </div>
               <div className="sleep-hours">{sleepHours} hrs</div>
               <div className="tracker-meta">Aim for 7-9 hours</div>
-              <button className="ghost-btn">Log Sleep</button>
+              <button className="ghost-btn" onClick={() => handleTrackerNavigation('/sleep-logs')}>Log Sleep</button>
             </div>
           </div>
         </div>
