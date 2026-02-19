@@ -10,8 +10,11 @@ import java.util.List;
 @AllArgsConstructor
 public class ProfileRequest {
     private Integer age;
+    private String gender;
     private Double height; // in cm
     private Double weight; // in kg
+    private List<String> goals;
+    private String activityLevel;
     private List<String> recentHealthIssues;
     private List<String> pastHealthIssues;
 }

@@ -15,11 +15,6 @@ const Signup = () => {
   })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [signupComplete, setSignupComplete] = useState(false)
-  const [otpSent, setOtpSent] = useState(false)
-  const [sendingOtp, setSendingOtp] = useState(false)
-  const [otp, setOtp] = useState('')
-  const [emailVerified, setEmailVerified] = useState(false)
   const [passwordStrength, setPasswordStrength] = useState('')
   const { login } = useAuth()
   const navigate = useNavigate()
@@ -142,61 +137,14 @@ const Signup = () => {
       if (data.token) {
         login(data)
         setSuccess('Account created successfully! Redirecting...')
-        setTimeout(() => navigate('/home'), 1000)
-      } else {
-        // Signup created but not verified yet
-        setSuccess(data.message || 'Signup complete. Please verify your email')
-        setSignupComplete(true)
-        // Automatically send verification email after signup so user receives OTP
-        try {
-          setSendingOtp(true)
-          setSuccess('Sending verification code...')
-          const sendRes = await authService.sendVerificationEmail(formData.email)
-          setOtpSent(true)
-          setSuccess(sendRes.message || 'Verification code sent to your email')
-        } catch (sendErr) {
-          setError(sendErr.response?.data?.message || 'Failed to send verification email. Please click Verify to resend.')
-        } finally {
-          setSendingOtp(false)
-        }
+        setTimeout(() => navigate('/user-profile', { state: { email: formData.email } }), 800)
+        return
       }
+
+      setSuccess(data.message || 'Signup complete. Please verify your email.')
+      setTimeout(() => navigate('/verify-email', { state: { email: formData.email } }), 800)
     } catch (error) {
       setError(error.response?.data?.message || 'Connection error. Please make sure the server is running.')
-    }
-  }
-
-  const handleSendOtp = async () => {
-    setError('')
-    setSuccess('')
-    try {
-      setSendingOtp(true)
-      setSuccess('Sending verification code...')
-      const data = await authService.sendVerificationEmail(formData.email)
-      setOtpSent(true)
-      setSuccess(data.message || 'Verification code sent')
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to send verification code')
-    } finally {
-      setSendingOtp(false)
-    }
-  }
-
-  const handleVerifyOtp = async () => {
-    setError('')
-    setSuccess('')
-    try {
-      const data = await authService.verifyEmail(formData.email, otp)
-      if (data.token) {
-        setEmailVerified(true)
-        setSuccess('Email verified ✔')
-        // auto-login and redirect to profile setup
-        login(data)
-        setTimeout(() => navigate('/user-profile', { state: { email: formData.email } }), 800)
-      } else {
-        setError(data.message || 'Verification failed')
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || 'Verification error')
     }
   }
 
@@ -240,35 +188,16 @@ const Signup = () => {
 
           <div className="form-group" style={{ display: 'flex', flexDirection: 'column' }}>
             <label htmlFor="email">Email Address</label>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                placeholder="Enter your email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                style={{ flex: 1 }}
-              />
-              <button type="button" className="verify-btn" onClick={handleSendOtp} disabled={!formData.email || otpSent} style={{ padding: '10px 5px' }}>
-                {sendingOtp ? 'Sending...' : otpSent ? 'Sent' : 'Verify'}
-              </button>
-            </div>
-            {emailVerified && (
-              <div style={{ color: '#28a745', marginTop: '6px', fontWeight: '600' }}>Verified ✔</div>
-            )}
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="Enter your email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
           </div>
-
-          {otpSent && !emailVerified && (
-            <div className="form-group">
-              <label>Verification Code</label>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <input value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="Enter code" />
-                <button type="button" className="btn" onClick={handleVerifyOtp}>Verify</button>
-              </div>
-            </div>
-          )}
 
           <div className="form-group">
             <label htmlFor="phoneNumber">Phone Number (10 digits)</label>
@@ -322,7 +251,7 @@ const Signup = () => {
             />
           </div>
 
-          <button type="submit" className="btn" disabled={signupComplete && !emailVerified}>Create Account</button>
+          <button type="submit" className="btn">Create Account</button>
         </form>
 
         <div className="divider">OR</div>

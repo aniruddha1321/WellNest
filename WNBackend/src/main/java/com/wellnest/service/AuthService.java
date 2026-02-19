@@ -52,7 +52,9 @@ public class AuthService {
         user.setUpdatedAt(LocalDateTime.now());
         user.setActive(false); // require email verification
 
-        // will require explicit verification via sendVerification endpoint
+        String otp = generateOtp();
+        user.setVerificationCode(otp);
+        user.setVerificationExpiry(LocalDateTime.now().plusMinutes(15));
 
         try {
             userRepository.save(user);
@@ -62,11 +64,13 @@ public class AuthService {
             }
             throw e;
         }
-        String otp = generateOtp();
-        user.setVerificationCode(otp);
-        user.setVerificationExpiry(LocalDateTime.now().plusMinutes(15));
-        userRepository.save(user);
-        emailService.sendVerificationEmail(user.getEmail(), otp);
+
+        try {
+            emailService.sendVerificationEmail(user.getEmail(), otp);
+        } catch (Exception ex) {
+            userRepository.delete(user);
+            throw new IllegalStateException("Failed to send verification email", ex);
+        }
         return new AuthResponse(null, user.getEmail(), user.getFullName(), "Signup successful. Please verify your email to activate your account.");
     }
 
