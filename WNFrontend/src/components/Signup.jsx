@@ -16,6 +16,7 @@ const Signup = () => {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [passwordStrength, setPasswordStrength] = useState('')
+  const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
 
@@ -70,6 +71,9 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (loading) {
+      return
+    }
     setError('')
     setSuccess('')
 
@@ -126,6 +130,7 @@ const Signup = () => {
     }
 
     try {
+      setLoading(true)
       const data = await authService.signup(
         formData.fullName,
         formData.username,
@@ -141,10 +146,18 @@ const Signup = () => {
         return
       }
 
+      const message = (data.message || '').toLowerCase()
+      if (message.includes('already') || message.includes('taken') || message.includes('registered') || message.includes('error')) {
+        setError(data.message || 'Signup failed. Please try again.')
+        return
+      }
+
       setSuccess(data.message || 'Signup complete. Please verify your email.')
       setTimeout(() => navigate('/verify-email', { state: { email: formData.email } }), 800)
     } catch (error) {
       setError(error.response?.data?.message || 'Connection error. Please make sure the server is running.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -251,7 +264,9 @@ const Signup = () => {
             />
           </div>
 
-          <button type="submit" className="btn">Create Account</button>
+          <button type="submit" className="btn" disabled={loading}>
+            {loading ? 'Creating...' : 'Create Account'}
+          </button>
         </form>
 
         <div className="divider">OR</div>

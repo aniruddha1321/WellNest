@@ -8,7 +8,12 @@ import ProtectedRoute from './components/ProtectedRoute'
 import ForgotPassword from './components/ForgotPassword'
 import ResetPassword from './components/ResetPassword'
 import UserProfile from './components/UserProfile'
+import Profile from './components/Profile'
 import VerifyEmail from './components/VerifyEmail'
+import WaterIntake from './components/WaterIntake'
+import SleepLogs from './components/SleepLogs'
+import WorkoutTracker from './components/WorkoutTracker'
+import MealTracker from './components/MealTracker'
 
 function App() {
   return (
@@ -19,11 +24,36 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/user-profile" element={<UserProfile />} />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          } />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/home" element={
             <ProtectedRoute>
               <Home />
+            </ProtectedRoute>
+          } />
+          <Route path="/water-intake" element={
+            <ProtectedRoute>
+              <WaterIntake />
+            </ProtectedRoute>
+          } />
+          <Route path="/sleep-logs" element={
+            <ProtectedRoute>
+              <SleepLogs />
+            </ProtectedRoute>
+          } />
+          <Route path="/workout-tracker" element={
+            <ProtectedRoute>
+              <WorkoutTracker />
+            </ProtectedRoute>
+          } />
+          <Route path="/meal-tracker" element={
+            <ProtectedRoute>
+              <MealTracker />
             </ProtectedRoute>
           } />
           <Route path="/" element={<Navigate to="/login" replace />} />
