@@ -1,1 +1,1 @@
-### WellNest Smart Health & Fitness Companions
+### WellNest Smart Health & Fitness Companion
