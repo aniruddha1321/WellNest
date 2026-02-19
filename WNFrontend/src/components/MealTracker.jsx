@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Bar, Doughnut } from 'react-chartjs-2'
@@ -19,16 +19,26 @@ ChartJS.register(CategoryScale, LinearScale, ArcElement, BarElement, Tooltip, Le
 const MealTracker = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const [formData, setFormData] = useState({
+    mealType: '',
+    foodType: '',
+    calories: '',
+    protein: '',
+    carbs: '',
+    fats: ''
+  })
+  const [meals, setMeals] = useState([])
+  const [chartData, setChartData] = useState({ calories: [0, 0, 0, 0, 0, 0, 0] })
+  const [showCharts, setShowCharts] = useState(false)
 
   const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-  const calories = [1850, 2100, 1980, 2200, 2050, 2300, 1950]
 
   const calorieData = {
     labels,
     datasets: [
       {
         label: 'Calories',
-        data: calories,
+        data: chartData.calories,
         backgroundColor: 'rgba(16, 185, 129, 0.7)',
         borderRadius: 8,
         maxBarThickness: 32
@@ -36,11 +46,16 @@ const MealTracker = () => {
     ]
   }
 
+  const totalProtein = meals.reduce((sum, meal) => sum + (meal.protein || 0), 0)
+  const totalCarbs = meals.reduce((sum, meal) => sum + (meal.carbs || 0), 0)
+  const totalFats = meals.reduce((sum, meal) => sum + (meal.fats || 0), 0)
+  const totalCalories = meals.reduce((sum, meal) => sum + (meal.calories || 0), 0)
+
   const macroData = {
     labels: ['Carbs', 'Protein', 'Fats'],
     datasets: [
       {
-        data: [50, 28, 22],
+        data: [totalCarbs, totalProtein, totalFats],
         backgroundColor: ['#10b981', '#0ea5a6', '#f2b94b'],
         borderWidth: 0
       }
@@ -60,12 +75,32 @@ const MealTracker = () => {
 
   const getUserInitial = () => user?.fullName?.charAt(0).toUpperCase() || 'U'
 
-  const meals = [
-    { meal: 'Breakfast', detail: 'Overnight oats + berries', calories: '420 kcal' },
-    { meal: 'Lunch', detail: 'Grilled chicken salad', calories: '560 kcal' },
-    { meal: 'Snack', detail: 'Greek yogurt + nuts', calories: '240 kcal' },
-    { meal: 'Dinner', detail: 'Salmon, quinoa, greens', calories: '630 kcal' }
-  ]
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    const dayIndex = (new Date().getDay() + 6) % 7
+    
+    const newMeal = {
+      meal: formData.mealType,
+      detail: formData.foodType,
+      calories: parseInt(formData.calories) || 0,
+      protein: parseInt(formData.protein) || 0,
+      carbs: parseInt(formData.carbs) || 0,
+      fats: parseInt(formData.fats) || 0
+    }
+    
+    setMeals([...meals, newMeal])
+    
+    const newCalories = [...chartData.calories]
+    newCalories[dayIndex] = (newCalories[dayIndex] || 0) + newMeal.calories
+    setChartData({ calories: newCalories })
+    
+    setShowCharts(true)
+    setFormData({ mealType: '', foodType: '', calories: '', protein: '', carbs: '', fats: '' })
+  }
 
   return (
     <div className="home-container">
@@ -90,63 +125,174 @@ const MealTracker = () => {
             <h1>Meal Tracker</h1>
             <p>Balance macros, log meals, and watch your daily intake.</p>
           </div>
-          <div className="tracker-actions">
-            <button className="ghost-btn">Add Meal</button>
-            <button className="ghost-btn" onClick={() => navigate('/workout-tracker')}>View Workouts</button>
-          </div>
         </section>
 
-        <section className="section-card tracker-grid animate delay-2">
-          <div className="stat-tile">
-            <div className="stat-title">Today</div>
-            <div className="stat-value">1,850 kcal</div>
-            <div className="stat-sub">Target 2,000 kcal</div>
-          </div>
-          <div className="stat-tile">
-            <div className="stat-title">Protein</div>
-            <div className="stat-value">118 g</div>
-            <div className="stat-sub">Goal 130 g</div>
-          </div>
-          <div className="stat-tile">
-            <div className="stat-title">Hydration Pairing</div>
-            <div className="stat-value">6 glasses</div>
-            <div className="stat-sub">Based on today&apos;s meals</div>
-          </div>
-          <div className="stat-tile">
-            <div className="stat-title">Meal Streak</div>
-            <div className="stat-value">5 days</div>
-            <div className="stat-sub">Logging all meals</div>
-          </div>
+        <section className="section-card animate delay-2" style={{ 
+          background: 'white', 
+          padding: '2.5rem', 
+          borderRadius: '20px', 
+          boxShadow: '0 4px 20px rgba(0,0,0,0.08)', 
+          maxWidth: '700px', 
+          margin: '0 auto 2rem auto',
+          border: '1px solid rgba(10, 61, 61, 0.08)'
+        }}>
+          <h3 style={{ marginBottom: '2rem', textAlign: 'center', fontSize: '1.5rem', fontWeight: '700', color: '#0a3d3d' }}>Log Your Meal</h3>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Meal Type</label>
+                <select
+                  name="mealType"
+                  value={formData.mealType}
+                  onChange={handleInputChange}
+                  required
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
+                >
+                  <option value="">Select meal type</option>
+                  <option value="Breakfast">Breakfast</option>
+                  <option value="Lunch">Lunch</option>
+                  <option value="Dinner">Dinner</option>
+                  <option value="Snack">Snack</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Food Type</label>
+                <select
+                  name="foodType"
+                  value={formData.foodType}
+                  onChange={handleInputChange}
+                  required
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
+                >
+                  <option value="">Select food type</option>
+                  <option value="Veg">Veg</option>
+                  <option value="Non-Veg">Non-Veg</option>
+                </select>
+              </div>
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Calories</label>
+              <input
+                type="number"
+                name="calories"
+                value={formData.calories}
+                onChange={handleInputChange}
+                required
+                min="1"
+                placeholder="e.g., 350"
+                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
+              />
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Protein (g)</label>
+                <input
+                  type="number"
+                  name="protein"
+                  value={formData.protein}
+                  onChange={handleInputChange}
+                  min="0"
+                  placeholder="20"
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Carbs (g)</label>
+                <input
+                  type="number"
+                  name="carbs"
+                  value={formData.carbs}
+                  onChange={handleInputChange}
+                  min="0"
+                  placeholder="45"
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Fats (g)</label>
+                <input
+                  type="number"
+                  name="fats"
+                  value={formData.fats}
+                  onChange={handleInputChange}
+                  min="0"
+                  placeholder="15"
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
+                />
+              </div>
+            </div>
+            
+            <button type="submit" className="ghost-btn" style={{ 
+              marginTop: '1rem', 
+              width: '100%', 
+              padding: '0.875rem',
+              fontSize: '1rem',
+              fontWeight: '600'
+            }}>
+              Log Meal
+            </button>
+          </form>
         </section>
 
-        <section className="section-card chart-grid animate delay-3">
-          <div className="chart-card">
-            <div className="chart-title">Calories Trend</div>
-            <div className="chart-subtitle">Daily calorie intake this week.</div>
-            <Bar data={calorieData} options={barOptions} />
-          </div>
-          <div className="chart-card">
-            <div className="chart-title">Macro Split</div>
-            <div className="chart-subtitle">Recommended balance for today.</div>
-            <Doughnut data={macroData} options={doughnutOptions} />
-          </div>
-        </section>
+        {showCharts && (
+          <>
+            <section className="section-card tracker-grid animate delay-3">
+              <div className="stat-tile">
+                <div className="stat-title">Today</div>
+                <div className="stat-value">{totalCalories} kcal</div>
+                <div className="stat-sub">Target 2,000 kcal</div>
+              </div>
+              <div className="stat-tile">
+                <div className="stat-title">Protein</div>
+                <div className="stat-value">{totalProtein} g</div>
+                <div className="stat-sub">Goal 130 g</div>
+              </div>
+              <div className="stat-tile">
+                <div className="stat-title">Carbs</div>
+                <div className="stat-value">{totalCarbs} g</div>
+                <div className="stat-sub">Goal 250 g</div>
+              </div>
+              <div className="stat-tile">
+                <div className="stat-title">Fats</div>
+                <div className="stat-value">{totalFats} g</div>
+                <div className="stat-sub">Goal 65 g</div>
+              </div>
+            </section>
 
-        <section className="section-card log-card animate delay-4">
-          <div className="chart-title">Today&apos;s Meals</div>
-          <div className="chart-subtitle">Track what you ate so far.</div>
-          <ul className="log-list">
-            {meals.map((meal) => (
-              <li key={meal.meal} className="log-row">
-                <div>
-                  <strong>{meal.meal}</strong>
-                  <div className="stat-sub">{meal.detail}</div>
-                </div>
-                <span className="badge">{meal.calories}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
+            <section className="section-card chart-grid animate delay-4">
+              <div className="chart-container">
+                <h3>Weekly Calories</h3>
+                <Bar data={calorieData} options={barOptions} />
+              </div>
+              <div className="chart-container">
+                <h3>Today's Macros</h3>
+                <Doughnut data={macroData} options={doughnutOptions} />
+              </div>
+            </section>
+
+            <section className="section-card animate delay-5">
+              <h3>Recent Meals</h3>
+              <div className="meals-list">
+                {meals.map((meal, index) => (
+                  <div key={index} className="meal-item">
+                    <div className="meal-info">
+                      <strong>{meal.meal}</strong>
+                      <span>{meal.detail}</span>
+                    </div>
+                    <div className="meal-stats">
+                      <span>{meal.calories} cal</span>
+                      <span>P: {meal.protein}g</span>
+                      <span>C: {meal.carbs}g</span>
+                      <span>F: {meal.fats}g</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
       </div>
     </div>
   )

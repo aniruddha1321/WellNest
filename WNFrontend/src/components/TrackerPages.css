@@ -64,6 +64,60 @@
   padding: 22px 26px 26px;
 }
 
+.chart-container {
+  padding: 18px;
+  border-radius: 18px;
+  background: var(--white);
+  border: 1px solid rgba(10, 61, 61, 0.08);
+  box-shadow: var(--shadow-soft);
+}
+
+.chart-container h3 {
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--ink-900);
+  font-size: 16px;
+}
+
+.meals-list {
+  display: grid;
+  gap: 12px;
+}
+
+.meal-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(209, 245, 239, 0.3);
+  border: 1px solid rgba(10, 61, 61, 0.08);
+}
+
+.meal-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meal-info strong {
+  color: var(--ink-900);
+  font-weight: 600;
+}
+
+.meal-info span {
+  color: var(--ink-500);
+  font-size: 14px;
+}
+
+.meal-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--ink-600);
+  font-weight: 500;
+}
+
 .chart-card {
   padding: 18px;
   border-radius: 18px;

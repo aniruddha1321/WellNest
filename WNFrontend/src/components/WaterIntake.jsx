@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Line, Bar } from 'react-chartjs-2'
@@ -21,9 +21,15 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarEleme
 const WaterIntake = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const [formData, setFormData] = useState({
+    liters: '',
+    cups: ''
+  })
+  const [intakeLogs, setIntakeLogs] = useState([])
+  const [chartData, setChartData] = useState({ glasses: [0, 0, 0, 0, 0, 0, 0] })
+  const [showCharts, setShowCharts] = useState(false)
 
   const weeklyLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-  const weeklyGlasses = [5, 7, 6, 8, 4, 6, 7]
   const goalGlasses = 8
 
   const weeklyLineData = {
@@ -31,7 +37,7 @@ const WaterIntake = () => {
     datasets: [
       {
         label: 'Glasses',
-        data: weeklyGlasses,
+        data: chartData.glasses,
         borderColor: '#0ea5a6',
         backgroundColor: 'rgba(14, 165, 166, 0.18)',
         tension: 0.4,
@@ -45,7 +51,7 @@ const WaterIntake = () => {
     datasets: [
       {
         label: 'Hydration %',
-        data: weeklyGlasses.map(value => Math.round((value / goalGlasses) * 100)),
+        data: chartData.glasses.map(value => Math.round((value / goalGlasses) * 100)),
         backgroundColor: 'rgba(16, 185, 129, 0.7)',
         borderRadius: 8,
         maxBarThickness: 32
@@ -68,12 +74,39 @@ const WaterIntake = () => {
 
   const getUserInitial = () => user?.fullName?.charAt(0).toUpperCase() || 'U'
 
-  const recentLogs = [
-    { time: '07:30 AM', amount: '1 glass', note: 'Before breakfast' },
-    { time: '11:00 AM', amount: '2 glasses', note: 'Post workout' },
-    { time: '03:15 PM', amount: '1 glass', note: 'Afternoon boost' },
-    { time: '08:45 PM', amount: '1 glass', note: 'After dinner' }
-  ]
+  const totalGlassesToday = chartData.glasses[(new Date().getDay() + 6) % 7] || 0
+  const totalLitersToday = intakeLogs.reduce((sum, log) => sum + (parseFloat(log.liters) || 0), 0)
+  const totalCupsToday = intakeLogs.reduce((sum, log) => sum + (parseFloat(log.cups) || 0), 0)
+
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    const dayIndex = (new Date().getDay() + 6) % 7
+    
+    const newLog = {
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      liters: parseFloat(formData.liters) || 0,
+      cups: parseFloat(formData.cups) || 0,
+      timestamp: new Date()
+    }
+    
+    setIntakeLogs([...intakeLogs, newLog])
+    
+    const glassesFromLiters = (parseFloat(formData.liters) || 0) * 4
+    const glassesFromCups = parseFloat(formData.cups) || 0
+    const totalGlasses = Math.round(glassesFromLiters + glassesFromCups)
+    
+    const newGlasses = [...chartData.glasses]
+    newGlasses[dayIndex] = (newGlasses[dayIndex] || 0) + totalGlasses
+    setChartData({ glasses: newGlasses })
+    
+    setShowCharts(true)
+    setFormData({ liters: '', cups: '' })
+  }
+  
 
   return (
     <div className="home-container">
@@ -98,63 +131,120 @@ const WaterIntake = () => {
             <h1>Water Intake</h1>
             <p>Keep your hydration steady and hit your daily target.</p>
           </div>
-          <div className="tracker-actions">
-            <button className="ghost-btn">Log a Glass</button>
-            <button className="ghost-btn" onClick={() => navigate('/sleep-logs')}>View Sleep</button>
-          </div>
         </section>
 
-        <section className="section-card tracker-grid animate delay-2">
-          <div className="stat-tile">
-            <div className="stat-title">Today</div>
-            <div className="stat-value">6 / {goalGlasses}</div>
-            <div className="stat-sub">Glasses logged</div>
-          </div>
-          <div className="stat-tile">
-            <div className="stat-title">Streak</div>
-            <div className="stat-value">4 days</div>
-            <div className="stat-sub">At least {goalGlasses} glasses</div>
-          </div>
-          <div className="stat-tile">
-            <div className="stat-title">Next Reminder</div>
-            <div className="stat-value">2:30 PM</div>
-            <div className="stat-sub">Tap to reschedule</div>
-          </div>
-          <div className="stat-tile">
-            <div className="stat-title">Goal</div>
-            <div className="stat-value">{goalGlasses} glasses</div>
-            <div className="stat-sub">Adjust daily target</div>
-          </div>
+        <section className="section-card animate delay-2" style={{ 
+          background: 'white', 
+          padding: '2.5rem', 
+          borderRadius: '20px', 
+          boxShadow: '0 4px 20px rgba(0,0,0,0.08)', 
+          maxWidth: '700px', 
+          margin: '0 auto 2rem auto',
+          border: '1px solid rgba(10, 61, 61, 0.08)'
+        }}>
+          <h3 style={{ marginBottom: '2rem', textAlign: 'center', fontSize: '1.5rem', fontWeight: '700', color: '#0a3d3d' }}>Log Water Intake</h3>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Liters</label>
+                <input
+                  type="number"
+                  name="liters"
+                  value={formData.liters}
+                  onChange={handleInputChange}
+                  min="0"
+                  step="0.1"
+                  placeholder="e.g., 0.5"
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Cups</label>
+                <input
+                  type="number"
+                  name="cups"
+                  value={formData.cups}
+                  onChange={handleInputChange}
+                  min="0"
+                  step="0.5"
+                  placeholder="e.g., 2"
+                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
+                />
+              </div>
+            </div>
+            
+            <button type="submit" className="ghost-btn" style={{ 
+              marginTop: '1rem', 
+              width: '100%', 
+              padding: '0.875rem',
+              fontSize: '1rem',
+              fontWeight: '600'
+            }}>
+              Log Water
+            </button>
+          </form>
         </section>
 
-        <section className="section-card chart-grid animate delay-3">
-          <div className="chart-card">
-            <div className="chart-title">Weekly Intake</div>
-            <div className="chart-subtitle">Track how close you are to the goal each day.</div>
-            <Line data={weeklyLineData} options={chartOptions} />
-          </div>
-          <div className="chart-card">
-            <div className="chart-title">Hydration Score</div>
-            <div className="chart-subtitle">Percent of goal reached each day.</div>
-            <Bar data={hydrationBars} options={chartOptions} />
-          </div>
-        </section>
+        {showCharts && (
+          <>
+            <section className="section-card tracker-grid animate delay-3">
+              <div className="stat-tile">
+                <div className="stat-title">Today</div>
+                <div className="stat-value">{totalGlassesToday} / {goalGlasses}</div>
+                <div className="stat-sub">Glasses logged</div>
+              </div>
+              <div className="stat-tile">
+                <div className="stat-title">Liters</div>
+                <div className="stat-value">{totalLitersToday.toFixed(1)} L</div>
+                <div className="stat-sub">Today's intake</div>
+              </div>
+              <div className="stat-tile">
+                <div className="stat-title">Cups</div>
+                <div className="stat-value">{totalCupsToday} cups</div>
+                <div className="stat-sub">Today's intake</div>
+              </div>
+              <div className="stat-tile">
+                <div className="stat-title">Goal</div>
+                <div className="stat-value">{goalGlasses} glasses</div>
+                <div className="stat-sub">Daily target</div>
+              </div>
+            </section>
 
-        <section className="section-card log-card animate delay-4">
-          <div className="chart-title">Today&apos;s Logs</div>
-          <div className="chart-subtitle">Quick snapshot of your hydration moments.</div>
-          <ul className="log-list">
-            {recentLogs.map((log) => (
-              <li key={log.time} className="log-row">
-                <div>
-                  <strong>{log.time}</strong>
-                  <div className="stat-sub">{log.note}</div>
-                </div>
-                <span className="badge">{log.amount}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
+            <section className="section-card chart-grid animate delay-4">
+              <div className="chart-card">
+                <div className="chart-title">Weekly Intake</div>
+                <div className="chart-subtitle">Track how close you are to the goal each day.</div>
+                <Line data={weeklyLineData} options={chartOptions} />
+              </div>
+              <div className="chart-card">
+                <div className="chart-title">Hydration Score</div>
+                <div className="chart-subtitle">Percent of goal reached each day.</div>
+                <Bar data={hydrationBars} options={chartOptions} />
+              </div>
+            </section>
+
+            {intakeLogs.length > 0 && (
+              <section className="section-card log-card animate delay-5">
+                <div className="chart-title">Recent Logs</div>
+                <div className="chart-subtitle">Your logged water intake.</div>
+                <ul className="log-list">
+                  {intakeLogs.map((log, index) => (
+                    <li key={index} className="log-row">
+                      <div>
+                        <strong>{log.time}</strong>
+                        <div className="stat-sub">Logged intake</div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        {log.liters > 0 && <span className="badge">{log.liters} L</span>}
+                        {log.cups > 0 && <span className="badge">{log.cups} cups</span>}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+          </>
+        )}
       </div>
     </div>
   )
