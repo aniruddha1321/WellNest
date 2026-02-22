@@ -1,0 +1,57 @@
+.workout-log-box {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  max-width: 300px;
+  margin: 20px auto;
+}
+
+.workout-log-box h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 18px;
+  text-align: center;
+}
+
+.workout-log-box form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.workout-log-box select,
+.workout-log-box input {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.workout-log-box select:focus,
+.workout-log-box input:focus {
+  border-color: #0ea5a6;
+}
+
+.workout-log-box button {
+  background: #0ea5a6;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.workout-log-box button:hover {
+  background: #0d9394;
+}
+
+.workout-log-box button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
