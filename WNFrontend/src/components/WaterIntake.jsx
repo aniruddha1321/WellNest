@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { waterService } from '../services/api'
 import { Line, Bar } from 'react-chartjs-2'
 import {
   Chart as ChartJS,
@@ -21,13 +22,10 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarEleme
 const WaterIntake = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const [formData, setFormData] = useState({
-    liters: '',
-    cups: ''
-  })
   const [intakeLogs, setIntakeLogs] = useState([])
   const [chartData, setChartData] = useState({ glasses: [0, 0, 0, 0, 0, 0, 0] })
-  const [showCharts, setShowCharts] = useState(false)
+  const [apiError, setApiError] = useState('')
+  const [dataLoaded, setDataLoaded] = useState(false)
 
   const weeklyLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
   const goalGlasses = 8
@@ -77,41 +75,100 @@ const WaterIntake = () => {
   const totalGlassesToday = chartData.glasses[(new Date().getDay() + 6) % 7] || 0
   const totalLitersToday = intakeLogs.reduce((sum, log) => sum + (parseFloat(log.liters) || 0), 0)
   const totalCupsToday = intakeLogs.reduce((sum, log) => sum + (parseFloat(log.cups) || 0), 0)
+  const hasLogs = intakeLogs.length > 0
 
-  const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
+  const buildWeeklyGlasses = (logs) => {
+    const glasses = [0, 0, 0, 0, 0, 0, 0]
+    logs.forEach((log) => {
+      const timestamp = log.timestamp ? new Date(log.timestamp) : new Date()
+      const dayIndex = (timestamp.getDay() + 6) % 7
+      const liters = parseFloat(log.liters) || 0
+      const cups = parseFloat(log.cups) || 0
+      const totalGlasses = Math.round(liters * 4 + cups)
+      glasses[dayIndex] += totalGlasses
+    })
+    return glasses
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    const dayIndex = (new Date().getDay() + 6) % 7
-    
-    const newLog = {
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      liters: parseFloat(formData.liters) || 0,
-      cups: parseFloat(formData.cups) || 0,
-      timestamp: new Date()
+  const refreshFromLogs = (logs) => {
+    setIntakeLogs(logs)
+    setChartData({ glasses: buildWeeklyGlasses(logs) })
+  }
+
+  const formatLogTime = (log) => {
+    if (!log.timestamp) {
+      return '—'
     }
-    
-    setIntakeLogs([...intakeLogs, newLog])
-    
-    const glassesFromLiters = (parseFloat(formData.liters) || 0) * 4
-    const glassesFromCups = parseFloat(formData.cups) || 0
-    const totalGlasses = Math.round(glassesFromLiters + glassesFromCups)
-    
-    const newGlasses = [...chartData.glasses]
-    newGlasses[dayIndex] = (newGlasses[dayIndex] || 0) + totalGlasses
-    setChartData({ glasses: newGlasses })
-    
-    setShowCharts(true)
-    setFormData({ liters: '', cups: '' })
+    return new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }
-  
+
+  useEffect(() => {
+    if (!user?.email) {
+      return
+    }
+
+    const loadLogs = async () => {
+      setApiError('')
+      try {
+        const result = await waterService.getWaterIntake(user.email)
+        const logs = result?.data ?? result ?? []
+        refreshFromLogs(logs)
+      } catch (error) {
+        setApiError('Unable to load water intake logs right now.')
+      } finally {
+        setDataLoaded(true)
+      }
+    }
+
+    loadLogs()
+  }, [user?.email])
+
+  // Redirect to add log page if no logs exist
+  useEffect(() => {
+    if (dataLoaded && intakeLogs.length === 0 && user?.email) {
+      navigate('/add-water')
+    }
+  }, [dataLoaded, intakeLogs.length, user?.email, navigate])
+
+  const handleDeleteLog = async (index) => {
+    if (!window.confirm('Are you sure you want to delete this log?')) {
+      return
+    }
+
+    const logToDelete = intakeLogs[index]
+    
+    try {
+      await waterService.deleteWaterIntake(user.email, logToDelete.id || index)
+      const updatedLogs = intakeLogs.filter((_, i) => i !== index)
+      refreshFromLogs(updatedLogs)
+    } catch (error) {
+      setApiError('Failed to delete log. Please try again.')
+    }
+  }
 
   return (
     <div className="home-container">
       <nav className="navbar">
-        <div className="navbar-brand">🏥 WellNest</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className="navbar-brand">🏥 WellNest</div>
+          <button
+            onClick={() => navigate('/home')}
+            style={{
+              padding: '0.5rem 1rem',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '1.2rem',
+              fontWeight: '500',
+              color: '#333',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => e.target.style.color = '#0ea5a6'}
+            onMouseLeave={(e) => e.target.style.color = '#333'}
+          >
+            🏠 Home
+          </button>
+        </div>
         <div className="navbar-user">
           <button className="user-info-btn" onClick={() => navigate('/home')}>
             <span className="user-info">
@@ -127,65 +184,37 @@ const WaterIntake = () => {
 
       <div className="container">
         <section className="section-card tracker-hero animate delay-1">
-          <div>
-            <h1>Water Intake</h1>
-            <p>Keep your hydration steady and hit your daily target.</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', width: '100%' }}>
+            <button
+              onClick={() => navigate(-1)}
+              style={{
+                padding: '0.5rem 1rem',
+                background: '#f0f0f0',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                fontWeight: '500'
+              }}
+            >
+              ← Back
+            </button>
+            <div>
+              <h1>Water Intake</h1>
+              <p>Keep your hydration steady and hit your daily target.</p>
+            </div>
+            <button
+              type="button"
+              className="ghost-btn"
+              onClick={() => navigate('/add-water')}
+              style={{ whiteSpace: 'nowrap', marginLeft: 'auto' }}
+            >
+              + Add Water Log
+            </button>
           </div>
         </section>
 
-        <section className="section-card animate delay-2" style={{ 
-          background: 'white', 
-          padding: '2.5rem', 
-          borderRadius: '20px', 
-          boxShadow: '0 4px 20px rgba(0,0,0,0.08)', 
-          maxWidth: '700px', 
-          margin: '0 auto 2rem auto',
-          border: '1px solid rgba(10, 61, 61, 0.08)'
-        }}>
-          <h3 style={{ marginBottom: '2rem', textAlign: 'center', fontSize: '1.5rem', fontWeight: '700', color: '#0a3d3d' }}>Log Water Intake</h3>
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Liters</label>
-                <input
-                  type="number"
-                  name="liters"
-                  value={formData.liters}
-                  onChange={handleInputChange}
-                  min="0"
-                  step="0.1"
-                  placeholder="e.g., 0.5"
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Cups</label>
-                <input
-                  type="number"
-                  name="cups"
-                  value={formData.cups}
-                  onChange={handleInputChange}
-                  min="0"
-                  step="0.5"
-                  placeholder="e.g., 2"
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
-                />
-              </div>
-            </div>
-            
-            <button type="submit" className="ghost-btn" style={{ 
-              marginTop: '1rem', 
-              width: '100%', 
-              padding: '0.875rem',
-              fontSize: '1rem',
-              fontWeight: '600'
-            }}>
-              Log Water
-            </button>
-          </form>
-        </section>
-
-        {showCharts && (
+        {hasLogs && (
           <>
             <section className="section-card tracker-grid animate delay-3">
               <div className="stat-tile">
@@ -231,12 +260,26 @@ const WaterIntake = () => {
                   {intakeLogs.map((log, index) => (
                     <li key={index} className="log-row">
                       <div>
-                        <strong>{log.time}</strong>
+                        <strong>{formatLogTime(log)}</strong>
                         <div className="stat-sub">Logged intake</div>
                       </div>
                       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                         {log.liters > 0 && <span className="badge">{log.liters} L</span>}
                         {log.cups > 0 && <span className="badge">{log.cups} cups</span>}
+                        <button
+                          onClick={() => handleDeleteLog(index)}
+                          style={{
+                            padding: '0.4rem 0.8rem',
+                            backgroundColor: '#ff6b6b',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '0.85rem'
+                          }}
+                        >
+                          Delete
+                        </button>
                       </div>
                     </li>
                   ))}

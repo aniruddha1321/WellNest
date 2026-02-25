@@ -14,6 +14,10 @@ import WaterIntake from './components/WaterIntake'
 import SleepLogs from './components/SleepLogs'
 import WorkoutTracker from './components/WorkoutTracker'
 import MealTracker from './components/MealTracker'
+import AddWorkoutLog from './components/AddWorkoutLog'
+import AddWaterLog from './components/AddWaterLog'
+import AddSleepLog from './components/AddSleepLog'
+import AddMealLog from './components/AddMealLog'
 
 function App() {
   return (
@@ -54,6 +58,26 @@ function App() {
           <Route path="/meal-tracker" element={
             <ProtectedRoute>
               <MealTracker />
+            </ProtectedRoute>
+          } />
+          <Route path="/add-workout" element={
+            <ProtectedRoute>
+              <AddWorkoutLog />
+            </ProtectedRoute>
+          } />
+          <Route path="/add-water" element={
+            <ProtectedRoute>
+              <AddWaterLog />
+            </ProtectedRoute>
+          } />
+          <Route path="/add-sleep" element={
+            <ProtectedRoute>
+              <AddSleepLog />
+            </ProtectedRoute>
+          } />
+          <Route path="/add-meal" element={
+            <ProtectedRoute>
+              <AddMealLog />
             </ProtectedRoute>
           } />
           <Route path="/" element={<Navigate to="/login" replace />} />

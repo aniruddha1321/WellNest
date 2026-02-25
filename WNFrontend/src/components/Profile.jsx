@@ -43,9 +43,9 @@ const Profile = () => {
           const response = await profileService.getProfile(user.email)
           setProfile(response.data)
           setEditFormData({
-            age: response.data.age || '',
-            height: response.data.height || '',
-            weight: response.data.weight || '',
+            age: response.data.age != null ? String(response.data.age) : '',
+            height: response.data.height != null ? String(response.data.height) : '',
+            weight: response.data.weight != null ? String(response.data.weight) : '',
             recentHealthIssues: response.data.recentHealthIssues || [],
             pastHealthIssues: response.data.pastHealthIssues || []
           })
@@ -75,16 +75,20 @@ const Profile = () => {
 
   const handleEditInputChange = (e) => {
     const { name, value } = e.target
+
     if (name === 'age') {
-      const age = parseInt(value) || ''
-      if (age === '' || (age >= 10 && age <= 120)) {
-        setEditFormData({ ...editFormData, [name]: age })
+      if (!/^\d{0,3}$/.test(value)) {
+        return
       }
-    } else if (name === 'height' || name === 'weight') {
-      const num = parseFloat(value) || ''
-      if (num === '' || num > 0) {
-        setEditFormData({ ...editFormData, [name]: num })
+      setEditFormData({ ...editFormData, [name]: value })
+      return
+    }
+
+    if (name === 'height' || name === 'weight') {
+      if (!/^\d*\.?\d*$/.test(value)) {
+        return
       }
+      setEditFormData({ ...editFormData, [name]: value })
     }
   }
 
@@ -109,7 +113,13 @@ const Profile = () => {
 
   const handleSaveProfile = async () => {
     try {
-      const updated = await profileService.updateProfile(user.email, editFormData)
+      const payload = {
+        ...editFormData,
+        age: editFormData.age === '' ? null : Number(editFormData.age),
+        height: editFormData.height === '' ? null : Number(editFormData.height),
+        weight: editFormData.weight === '' ? null : Number(editFormData.weight)
+      }
+      const updated = await profileService.updateProfile(user.email, payload)
       setProfile(updated.data)
       setIsEditingProfile(false)
     } catch (err) {
@@ -120,7 +130,26 @@ const Profile = () => {
   return (
     <div className="home-container">
       <nav className="navbar">
-        <div className="navbar-brand">🏥 WellNest</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className="navbar-brand">🏥 WellNest</div>
+          <button
+            onClick={handleHomeClick}
+            style={{
+              padding: '0.5rem 1rem',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '1.2rem',
+              fontWeight: '500',
+              color: '#333',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => e.target.style.color = '#0ea5a6'}
+            onMouseLeave={(e) => e.target.style.color = '#333'}
+          >
+            🏠 Home
+          </button>
+        </div>
         <div className="navbar-user">
           <button className="user-info-btn" onClick={handleHomeClick}>
             <span className="user-info">

@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { workoutService } from '../services/api'
 import { Line, Bar } from 'react-chartjs-2'
 import {
   Chart as ChartJS,
@@ -20,13 +21,10 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarEleme
 const WorkoutTracker = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const [formData, setFormData] = useState({
-    exerciseType: '',
-    duration: '',
-    calories: ''
-  })
   const [workouts, setWorkouts] = useState([])
   const [chartData, setChartData] = useState({ minutes: [0,0,0,0,0,0,0], calories: [0,0,0,0,0,0,0] })
+  const [apiError, setApiError] = useState('')
+  const [dataLoaded, setDataLoaded] = useState(false)
 
   const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -65,42 +63,104 @@ const WorkoutTracker = () => {
 
   const getUserInitial = () => user?.fullName?.charAt(0).toUpperCase() || 'U'
 
-  const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
+  const buildWeeklyTotals = (logs) => {
+    const minutes = [0, 0, 0, 0, 0, 0, 0]
+    const calories = [0, 0, 0, 0, 0, 0, 0]
+    logs.forEach((log) => {
+      const timestamp = log.timestamp ? new Date(log.timestamp) : new Date()
+      const dayIndex = (timestamp.getDay() + 6) % 7
+      minutes[dayIndex] += parseInt(log.durationMinutes || 0, 10)
+      calories[dayIndex] += parseInt(log.calories || 0, 10)
+    })
+    return { minutes, calories }
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-    const today = days[new Date().getDay()]
-    const dayIndex = (new Date().getDay() + 6) % 7
-    
-    const newWorkout = {
-      day: today,
-      type: formData.exerciseType,
-      duration: `${formData.duration} min`,
-      calories: formData.calories || 0
-    }
-    
-    setWorkouts([newWorkout, ...workouts])
-    
-    const newMinutes = [...chartData.minutes]
-    const newCalories = [...chartData.calories]
-    newMinutes[dayIndex] = (newMinutes[dayIndex] || 0) + parseInt(formData.duration)
-    newCalories[dayIndex] = (newCalories[dayIndex] || 0) + parseInt(formData.calories || 0)
-    
-    setChartData({ minutes: newMinutes, calories: newCalories })
-    setFormData({ exerciseType: '', duration: '', calories: '' })
+  const refreshFromLogs = (logs) => {
+    setWorkouts(logs)
+    setChartData(buildWeeklyTotals(logs))
   }
+
+  const formatLogDate = (log) => {
+    if (!log.timestamp) {
+      return '—'
+    }
+    return new Date(log.timestamp).toLocaleDateString()
+  }
+
+  useEffect(() => {
+    if (!user?.email) {
+      return
+    }
+
+    const loadLogs = async () => {
+      setApiError('')
+      try {
+        const result = await workoutService.getWorkouts(user.email)
+        const logs = result?.data ?? result ?? []
+        refreshFromLogs(logs)
+      } catch (error) {
+        setApiError('Unable to load workout logs right now.')
+      } finally {
+        setDataLoaded(true)
+      }
+    }
+
+    loadLogs()
+  }, [user?.email])
+
+  // Redirect to add log page if no logs exist
+  useEffect(() => {
+    if (dataLoaded && workouts.length === 0 && user?.email) {
+      navigate('/add-workout')
+    }
+  }, [dataLoaded, workouts.length, user?.email, navigate])
+
+  const handleDeleteLog = async (index) => {
+    if (!window.confirm('Are you sure you want to delete this log?')) {
+      return
+    }
+
+    const logToDelete = workouts[index]
+    
+    try {
+      await workoutService.deleteWorkout(user.email, logToDelete.id || index)
+      const updatedWorkouts = workouts.filter((_, i) => i !== index)
+      refreshFromLogs(updatedWorkouts)
+    } catch (error) {
+      setApiError('Failed to delete log. Please try again.')
+    }
+  }
+
+
 
   const totalMinutes = chartData.minutes.reduce((a, b) => a + b, 0)
   const totalCalories = chartData.calories.reduce((a, b) => a + b, 0)
   const sessionsCount = workouts.length
+  const hasLogs = workouts.length > 0
 
   return (
     <div className="home-container">
       <nav className="navbar">
-        <div className="navbar-brand">🏥 WellNest</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className="navbar-brand">🏥 WellNest</div>
+          <button
+            onClick={() => navigate('/home')}
+            style={{
+              padding: '0.5rem 1rem',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '1.2rem',
+              fontWeight: '500',
+              color: '#333',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => e.target.style.color = '#0ea5a6'}
+            onMouseLeave={(e) => e.target.style.color = '#333'}
+          >
+            🏠 Home
+          </button>
+        </div>
         <div className="navbar-user">
           <button className="user-info-btn" onClick={() => navigate('/home')}>
             <span className="user-info">
@@ -116,84 +176,36 @@ const WorkoutTracker = () => {
 
       <div className="container">
         <section className="section-card tracker-hero animate delay-1">
-          <div>
-            <h1>Workout Tracker</h1>
-            <p>Log your daily workouts and track your progress.</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', width: '100%' }}>
+            <button
+              onClick={() => navigate(-1)}
+              style={{
+                padding: '0.5rem 1rem',
+                background: '#f0f0f0',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                fontWeight: '500'
+              }}
+            >
+              ← Back
+            </button>
+            <div>
+              <h1>Workout Tracker</h1>
+              <p>Log your daily workouts and track your progress.</p>
+            </div>
+            <button
+              className="ghost-btn"
+              onClick={() => navigate('/add-workout')}
+              style={{ marginLeft: 'auto' }}
+            >
+              + Add Workout Log
+            </button>
           </div>
         </section>
 
-        <section className="section-card animate delay-2" style={{ 
-          background: 'white', 
-          padding: '2.5rem', 
-          borderRadius: '20px', 
-          boxShadow: '0 4px 20px rgba(0,0,0,0.08)', 
-          maxWidth: '700px', 
-          margin: '0 auto 2rem auto',
-          border: '1px solid rgba(10, 61, 61, 0.08)'
-        }}>
-          <h3 style={{ marginBottom: '2rem', textAlign: 'center', fontSize: '1.5rem', fontWeight: '700', color: '#0a3d3d' }}>Log Your Workout</h3>
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Exercise Type</label>
-              <select
-                name="exerciseType"
-                value={formData.exerciseType}
-                onChange={handleInputChange}
-                required
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
-              >
-                <option value="">Select exercise type</option>
-                <option value="Cardio">Cardio</option>
-                <option value="Strength">Strength</option>
-                <option value="Yoga">Yoga</option>
-                <option value="HIIT">HIIT</option>
-                <option value="Cycling">Cycling</option>
-                <option value="Running">Running</option>
-                <option value="Swimming">Swimming</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Duration (minutes)</label>
-              <input
-                type="number"
-                name="duration"
-                value={formData.duration}
-                onChange={handleInputChange}
-                required
-                min="1"
-                placeholder="e.g., 30"
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
-              />
-            </div>
-            
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Calories Burned (optional)</label>
-              <input
-                type="number"
-                name="calories"
-                value={formData.calories}
-                onChange={handleInputChange}
-                min="0"
-                placeholder="e.g., 250"
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
-              />
-            </div>
-            
-            <button type="submit" className="ghost-btn" style={{ 
-              marginTop: '1rem', 
-              width: '100%', 
-              padding: '0.875rem',
-              fontSize: '1rem',
-              fontWeight: '600'
-            }}>
-              Submit Workout
-            </button>
-          </form>
-        </section>
-
-        {workouts.length > 0 && (
+        {hasLogs && (
           <>
             <section className="section-card tracker-grid animate delay-3">
               <div className="stat-tile">
@@ -238,12 +250,26 @@ const WorkoutTracker = () => {
                 {workouts.map((item, index) => (
                   <li key={index} className="log-row">
                     <div>
-                      <strong>{item.day}</strong>
-                      <div className="stat-sub">{item.type}</div>
+                      <strong>{formatLogDate(item)}</strong>
+                      <div className="stat-sub">{item.exerciseType}</div>
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <span className="badge">{item.duration}</span>
+                      <span className="badge">{item.durationMinutes} min</span>
                       {item.calories > 0 && <span className="stat-sub">{item.calories} cal</span>}
+                      <button
+                        onClick={() => handleDeleteLog(index)}
+                        style={{
+                          padding: '0.4rem 0.8rem',
+                          backgroundColor: '#ff6b6b',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '0.85rem'
+                        }}
+                      >
+                        Delete
+                      </button>
                     </div>
                   </li>
                 ))}

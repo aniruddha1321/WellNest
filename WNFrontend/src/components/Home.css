@@ -1,5 +1,55 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
+/* Navbar options styling */
+.navbar-options {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: 2rem;
+}
+
+/* Logo as clickable button */
+.navbar-brand {
+  font-size: 24px;
+  font-weight: 700;
+  font-family: 'Fraunces', serif;
+  color: white;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  letter-spacing: 0.01em;
+  transition: opacity 0.2s;
+}
+
+.navbar-brand:hover {
+  opacity: 0.85;
+}
+
+/* Nav buttons — frosted pill style on green navbar */
+.navbar-nav-btn {
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
+  color: #fff;
+  font-size: 0.92rem;
+  padding: 0.5rem 1.3rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s;
+  font-weight: 600;
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.navbar-nav-btn:hover,
+.navbar-nav-btn:focus {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #fff;
+  outline: none;
+}
+
+
 :root {
   --mint-900: #0a3d3d;
   --mint-700: #0ea5a6;
@@ -33,13 +83,19 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 6px 24px rgba(6,46,22,0.06);
+  box-shadow: 0 6px 24px rgba(6, 46, 22, 0.06);
 }
 
 .navbar-brand {
   font-size: 24px;
   font-weight: 700;
   font-family: 'Fraunces', serif;
+  color: white;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.2s;
 }
 
 .navbar-user {
@@ -162,18 +218,36 @@
   animation: riseIn 0.6s ease both;
 }
 
-.delay-1 { animation-delay: 0.05s; }
-.delay-2 { animation-delay: 0.12s; }
-.delay-3 { animation-delay: 0.18s; }
-.delay-4 { animation-delay: 0.24s; }
-.delay-5 { animation-delay: 0.3s; }
-.delay-6 { animation-delay: 0.36s; }
+.delay-1 {
+  animation-delay: 0.05s;
+}
+
+.delay-2 {
+  animation-delay: 0.12s;
+}
+
+.delay-3 {
+  animation-delay: 0.18s;
+}
+
+.delay-4 {
+  animation-delay: 0.24s;
+}
+
+.delay-5 {
+  animation-delay: 0.3s;
+}
+
+.delay-6 {
+  animation-delay: 0.36s;
+}
 
 @keyframes riseIn {
   from {
     opacity: 0;
     transform: translateY(18px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -299,24 +373,6 @@
 
 .dashboard-card:hover {
   transform: translateY(-5px);
-}
-
-.card-icon {
-  font-size: 48px;
-  margin-bottom: 15px;
-}
-
-.card-title {
-  font-size: 20px;
-  color: var(--ink-900);
-  font-weight: 600;
-  margin-bottom: 10px;
-}
-
-.card-description {
-  color: var(--ink-500);
-  font-size: 14px;
-  line-height: 1.6;
 }
 
 .stats-section {
@@ -717,6 +773,7 @@
 }
 
 @media (max-width: 768px) {
+
   .account-header,
   .section-title-row {
     flex-direction: column;
@@ -729,9 +786,297 @@
   .account-section {
     padding: 24px;
   }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .btn-cancel:hover {
   background: #d6d6d6;
   transform: translateY(-2px);
+}
+
+.goal-tracker-section {
+  padding: 28px 32px 32px;
+}
+
+.goal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.goal-header h2 {
+  font-family: 'Fraunces', serif;
+  font-size: 24px;
+  margin: 0 0 6px;
+}
+
+.goal-header p {
+  margin: 0;
+  color: var(--ink-500);
+}
+
+.goals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.goal-card {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(14, 165, 166, 0.08) 100%);
+  border: 1px solid rgba(10, 61, 61, 0.1);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.goal-icon {
+  font-size: 32px;
+  margin-bottom: 6px;
+}
+
+.goal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink-900);
+}
+
+.goal-target {
+  font-size: 13px;
+  color: var(--ink-500);
+  font-weight: 500;
+}
+
+.goal-progress {
+  height: 6px;
+  background: rgba(10, 61, 61, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 6px 0;
+}
+
+.goal-progress .progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981 0%, #0ea5a6 100%);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.goal-meta {
+  font-size: 12px;
+  color: var(--ink-500);
+  font-weight: 500;
+}
+
+.goal-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.goal-delete-btn {
+  background: rgba(220, 38, 38, 0.1);
+  border: none;
+  color: #dc2626;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.goal-delete-btn:hover {
+  background: rgba(220, 38, 38, 0.2);
+  transform: scale(1.1);
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(10, 61, 61, 0.2);
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid rgba(10, 61, 61, 0.1);
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-family: 'Fraunces', serif;
+  font-size: 24px;
+  color: var(--ink-900);
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--ink-500);
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.modal-close:hover {
+  color: var(--ink-900);
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.modal-footer {
+  padding: 20px 24px;
+  border-top: 1px solid rgba(10, 61, 61, 0.1);
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  color: var(--ink-700);
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid rgba(10, 61, 61, 0.15);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: 'Space Grotesk', sans-serif;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--mint-700);
+}
+
+.form-hint {
+  font-size: 12px;
+  color: var(--ink-500);
+  margin: 6px 0 0 0;
+  font-style: italic;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 0;
+}
+
+.btn-primary {
+  background: linear-gradient(90deg, #10b981 0%, #0ea5a6 100%);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--ink-700);
+  border: 1px solid rgba(10, 61, 61, 0.2);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  border-color: var(--ink-500);
+  color: var(--ink-900);
+}
+
+/* ── Welcome Banner Tip ── */
+.banner-tip {
+  position: relative;
+  margin-top: 16px;
+  border-radius: 12px;
+  overflow: hidden;
+  max-height: 140px;
+}
+
+.banner-tip-img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  display: block;
+}
+
+.banner-tip-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(5, 40, 40, 0.78);
+  padding: 10px 16px;
+}
+
+.banner-tip-text {
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.5;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }

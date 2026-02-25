@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { mealService } from '../services/api'
 import { Bar, Doughnut } from 'react-chartjs-2'
 import {
   Chart as ChartJS,
@@ -19,17 +20,10 @@ ChartJS.register(CategoryScale, LinearScale, ArcElement, BarElement, Tooltip, Le
 const MealTracker = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const [formData, setFormData] = useState({
-    mealType: '',
-    foodType: '',
-    calories: '',
-    protein: '',
-    carbs: '',
-    fats: ''
-  })
   const [meals, setMeals] = useState([])
   const [chartData, setChartData] = useState({ calories: [0, 0, 0, 0, 0, 0, 0] })
-  const [showCharts, setShowCharts] = useState(false)
+  const [apiError, setApiError] = useState('')
+  const [dataLoaded, setDataLoaded] = useState(false)
 
   const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -50,6 +44,7 @@ const MealTracker = () => {
   const totalCarbs = meals.reduce((sum, meal) => sum + (meal.carbs || 0), 0)
   const totalFats = meals.reduce((sum, meal) => sum + (meal.fats || 0), 0)
   const totalCalories = meals.reduce((sum, meal) => sum + (meal.calories || 0), 0)
+  const hasLogs = meals.length > 0
 
   const macroData = {
     labels: ['Carbs', 'Protein', 'Fats'],
@@ -75,37 +70,99 @@ const MealTracker = () => {
 
   const getUserInitial = () => user?.fullName?.charAt(0).toUpperCase() || 'U'
 
-  const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
+  const buildWeeklyCalories = (logs) => {
+    const calories = [0, 0, 0, 0, 0, 0, 0]
+    logs.forEach((log) => {
+      const timestamp = log.timestamp ? new Date(log.timestamp) : new Date()
+      const dayIndex = (timestamp.getDay() + 6) % 7
+      calories[dayIndex] += parseInt(log.calories || 0, 10)
+    })
+    return calories
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    const dayIndex = (new Date().getDay() + 6) % 7
-    
-    const newMeal = {
-      meal: formData.mealType,
-      detail: formData.foodType,
-      calories: parseInt(formData.calories) || 0,
-      protein: parseInt(formData.protein) || 0,
-      carbs: parseInt(formData.carbs) || 0,
-      fats: parseInt(formData.fats) || 0
+  const refreshFromLogs = (logs) => {
+    const normalized = logs.map((log) => ({
+      mealType: log.mealType,
+      foodType: log.foodType,
+      calories: parseInt(log.calories || 0, 10),
+      protein: parseInt(log.protein || 0, 10),
+      carbs: parseInt(log.carbs || 0, 10),
+      fats: parseInt(log.fats || 0, 10),
+      notes: log.notes || '',
+      timestamp: log.timestamp
+    }))
+
+    setMeals(normalized)
+    setChartData({ calories: buildWeeklyCalories(normalized) })
+  }
+
+  useEffect(() => {
+    if (!user?.email) {
+      return
     }
+
+    const loadLogs = async () => {
+      setApiError('')
+      try {
+        const result = await mealService.getMeals(user.email)
+        const logs = result?.data ?? result ?? []
+        refreshFromLogs(logs)
+      } catch (error) {
+        setApiError('Unable to load meal logs right now.')
+      } finally {
+        setDataLoaded(true)
+      }
+    }
+
+    loadLogs()
+  }, [user?.email])
+
+  // Redirect to add log page if no logs exist
+  useEffect(() => {
+    if (dataLoaded && meals.length === 0 && user?.email) {
+      navigate('/add-meal')
+    }
+  }, [dataLoaded, meals.length, user?.email, navigate])
+
+  const handleDeleteLog = async (index) => {
+    if (!window.confirm('Are you sure you want to delete this log?')) {
+      return
+    }
+
+    const logToDelete = meals[index]
     
-    setMeals([...meals, newMeal])
-    
-    const newCalories = [...chartData.calories]
-    newCalories[dayIndex] = (newCalories[dayIndex] || 0) + newMeal.calories
-    setChartData({ calories: newCalories })
-    
-    setShowCharts(true)
-    setFormData({ mealType: '', foodType: '', calories: '', protein: '', carbs: '', fats: '' })
+    try {
+      await mealService.deleteMeal(user.email, logToDelete.id || index)
+      const updatedMeals = meals.filter((_, i) => i !== index)
+      refreshFromLogs(updatedMeals)
+    } catch (error) {
+      setApiError('Failed to delete log. Please try again.')
+    }
   }
 
   return (
     <div className="home-container">
       <nav className="navbar">
-        <div className="navbar-brand">🏥 WellNest</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className="navbar-brand">🏥 WellNest</div>
+          <button
+            onClick={() => navigate('/home')}
+            style={{
+              padding: '0.5rem 1rem',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '1.2rem',
+              fontWeight: '500',
+              color: '#333',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => e.target.style.color = '#0ea5a6'}
+            onMouseLeave={(e) => e.target.style.color = '#333'}
+          >
+            🏠 Home
+          </button>
+        </div>
         <div className="navbar-user">
           <button className="user-info-btn" onClick={() => navigate('/home')}>
             <span className="user-info">
@@ -121,122 +178,37 @@ const MealTracker = () => {
 
       <div className="container">
         <section className="section-card tracker-hero animate delay-1">
-          <div>
-            <h1>Meal Tracker</h1>
-            <p>Balance macros, log meals, and watch your daily intake.</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', width: '100%' }}>
+            <button
+              onClick={() => navigate(-1)}
+              style={{
+                padding: '0.5rem 1rem',
+                background: '#f0f0f0',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                fontWeight: '500'
+              }}
+            >
+              ← Back
+            </button>
+            <div>
+              <h1>Meal Tracker</h1>
+              <p>Balance macros, log meals, and watch your daily intake.</p>
+            </div>
+            <button
+              type="button"
+              className="ghost-btn"
+              onClick={() => navigate('/add-meal')}
+              style={{ whiteSpace: 'nowrap', marginLeft: 'auto' }}
+            >
+              + Add Meal Log
+            </button>
           </div>
         </section>
 
-        <section className="section-card animate delay-2" style={{ 
-          background: 'white', 
-          padding: '2.5rem', 
-          borderRadius: '20px', 
-          boxShadow: '0 4px 20px rgba(0,0,0,0.08)', 
-          maxWidth: '700px', 
-          margin: '0 auto 2rem auto',
-          border: '1px solid rgba(10, 61, 61, 0.08)'
-        }}>
-          <h3 style={{ marginBottom: '2rem', textAlign: 'center', fontSize: '1.5rem', fontWeight: '700', color: '#0a3d3d' }}>Log Your Meal</h3>
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Meal Type</label>
-                <select
-                  name="mealType"
-                  value={formData.mealType}
-                  onChange={handleInputChange}
-                  required
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
-                >
-                  <option value="">Select meal type</option>
-                  <option value="Breakfast">Breakfast</option>
-                  <option value="Lunch">Lunch</option>
-                  <option value="Dinner">Dinner</option>
-                  <option value="Snack">Snack</option>
-                </select>
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Food Type</label>
-                <select
-                  name="foodType"
-                  value={formData.foodType}
-                  onChange={handleInputChange}
-                  required
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
-                >
-                  <option value="">Select food type</option>
-                  <option value="Veg">Veg</option>
-                  <option value="Non-Veg">Non-Veg</option>
-                </select>
-              </div>
-            </div>
-            
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Calories</label>
-              <input
-                type="number"
-                name="calories"
-                value={formData.calories}
-                onChange={handleInputChange}
-                required
-                min="1"
-                placeholder="e.g., 350"
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
-              />
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Protein (g)</label>
-                <input
-                  type="number"
-                  name="protein"
-                  value={formData.protein}
-                  onChange={handleInputChange}
-                  min="0"
-                  placeholder="20"
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Carbs (g)</label>
-                <input
-                  type="number"
-                  name="carbs"
-                  value={formData.carbs}
-                  onChange={handleInputChange}
-                  min="0"
-                  placeholder="45"
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Fats (g)</label>
-                <input
-                  type="number"
-                  name="fats"
-                  value={formData.fats}
-                  onChange={handleInputChange}
-                  min="0"
-                  placeholder="15"
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
-                />
-              </div>
-            </div>
-            
-            <button type="submit" className="ghost-btn" style={{ 
-              marginTop: '1rem', 
-              width: '100%', 
-              padding: '0.875rem',
-              fontSize: '1rem',
-              fontWeight: '600'
-            }}>
-              Log Meal
-            </button>
-          </form>
-        </section>
-
-        {showCharts && (
+        {hasLogs && (
           <>
             <section className="section-card tracker-grid animate delay-3">
               <div className="stat-tile">
@@ -278,14 +250,29 @@ const MealTracker = () => {
                 {meals.map((meal, index) => (
                   <div key={index} className="meal-item">
                     <div className="meal-info">
-                      <strong>{meal.meal}</strong>
-                      <span>{meal.detail}</span>
+                      <strong>{meal.mealType}</strong>
+                      <span>{meal.foodType}</span>
+                      {meal.notes && <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.3rem' }}>Notes: {meal.notes}</div>}
                     </div>
                     <div className="meal-stats">
                       <span>{meal.calories} cal</span>
                       <span>P: {meal.protein}g</span>
                       <span>C: {meal.carbs}g</span>
                       <span>F: {meal.fats}g</span>
+                      <button
+                        onClick={() => handleDeleteLog(index)}
+                        style={{
+                          padding: '0.4rem 0.8rem',
+                          backgroundColor: '#ff6b6b',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '0.85rem'
+                        }}
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
                 ))}

@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -55,6 +56,10 @@ public class User {
     private List<String> recentHealthIssues;
     private List<String> pastHealthIssues;
     private Boolean profileCompleted;
+    private List<WaterIntakeLog> waterIntakeLogs;
+    private List<WorkoutLog> workoutLogs;
+    private List<SleepLog> sleepLogs;
+    private List<MealLog> mealLogs;
     
     public User(String fullName, String email, String password) {
         this.fullName = fullName;
@@ -64,5 +69,9 @@ public class User {
         this.updatedAt = LocalDateTime.now();
         this.active = true;
         this.profileCompleted = false;
+        this.waterIntakeLogs = new ArrayList<>();
+        this.workoutLogs = new ArrayList<>();
+        this.sleepLogs = new ArrayList<>();
+        this.mealLogs = new ArrayList<>();
     }
 }

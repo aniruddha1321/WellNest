@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { sleepService } from '../services/api'
 import { Line, Bar } from 'react-chartjs-2'
 import {
   Chart as ChartJS,
@@ -20,13 +21,10 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarEleme
 const SleepLogs = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const [formData, setFormData] = useState({
-    duration: '',
-    notes: ''
-  })
   const [sleepLogs, setSleepLogs] = useState([])
   const [chartData, setChartData] = useState({ hours: [0, 0, 0, 0, 0, 0, 0] })
-  const [showCharts, setShowCharts] = useState(false)
+  const [apiError, setApiError] = useState('')
+  const [dataLoaded, setDataLoaded] = useState(false)
 
   const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -71,39 +69,100 @@ const SleepLogs = () => {
 
   const getUserInitial = () => user?.fullName?.charAt(0).toUpperCase() || 'U'
 
+  const buildWeeklyHours = (logs) => {
+    const hours = [0, 0, 0, 0, 0, 0, 0]
+    logs.forEach((log) => {
+      const timestamp = log.timestamp ? new Date(log.timestamp) : new Date()
+      const dayIndex = (timestamp.getDay() + 6) % 7
+      hours[dayIndex] += parseFloat(log.durationHours || 0)
+    })
+    return hours
+  }
+
+  const refreshFromLogs = (logs) => {
+    setSleepLogs(logs)
+    setChartData({ hours: buildWeeklyHours(logs) })
+  }
+
+  const formatLogDate = (log) => {
+    if (!log.timestamp) {
+      return '—'
+    }
+    return new Date(log.timestamp).toLocaleDateString()
+  }
+
+  useEffect(() => {
+    if (!user?.email) {
+      return
+    }
+
+    const loadLogs = async () => {
+      setApiError('')
+      try {
+        const result = await sleepService.getSleepLogs(user.email)
+        const logs = result?.data ?? result ?? []
+        refreshFromLogs(logs)
+      } catch (error) {
+        setApiError('Unable to load sleep logs right now.')
+      } finally {
+        setDataLoaded(true)
+      }
+    }
+
+    loadLogs()
+  }, [user?.email])
+
+  // Redirect to add log page if no logs exist
+  useEffect(() => {
+    if (dataLoaded && sleepLogs.length === 0 && user?.email) {
+      navigate('/add-sleep')
+    }
+  }, [dataLoaded, sleepLogs.length, user?.email, navigate])
+
+  const handleDeleteLog = async (index) => {
+    if (!window.confirm('Are you sure you want to delete this log?')) {
+      return
+    }
+
+    const logToDelete = sleepLogs[index]
+    
+    try {
+      await sleepService.deleteSleepLog(user.email, logToDelete.id || index)
+      const updatedLogs = sleepLogs.filter((_, i) => i !== index)
+      refreshFromLogs(updatedLogs)
+    } catch (error) {
+      setApiError('Failed to delete log. Please try again.')
+    }
+  }
+
   const totalHours = chartData.hours.reduce((sum, h) => sum + h, 0)
   const avgHours = sleepLogs.length > 0 ? (totalHours / sleepLogs.length).toFixed(1) : 0
   const lastNightHours = chartData.hours[(new Date().getDay() + 6) % 7] || 0
-
-  const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    const dayIndex = (new Date().getDay() + 6) % 7
-    
-    const newLog = {
-      date: new Date().toLocaleDateString(),
-      duration: parseFloat(formData.duration),
-      notes: formData.notes,
-      timestamp: new Date()
-    }
-    
-    setSleepLogs([newLog, ...sleepLogs])
-    
-    const newHours = [...chartData.hours]
-    newHours[dayIndex] = parseFloat(formData.duration) || 0
-    setChartData({ hours: newHours })
-    
-    setShowCharts(true)
-    setFormData({ duration: '', notes: '' })
-  }
+  const hasLogs = sleepLogs.length > 0
 
   return (
     <div className="home-container">
       <nav className="navbar">
-        <div className="navbar-brand">🏥 WellNest</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className="navbar-brand">🏥 WellNest</div>
+          <button
+            onClick={() => navigate('/home')}
+            style={{
+              padding: '0.5rem 1rem',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '1.2rem',
+              fontWeight: '500',
+              color: '#333',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => e.target.style.color = '#0ea5a6'}
+            onMouseLeave={(e) => e.target.style.color = '#333'}
+          >
+            🏠 Home
+          </button>
+        </div>
         <div className="navbar-user">
           <button className="user-info-btn" onClick={() => navigate('/home')}>
             <span className="user-info">
@@ -119,64 +178,37 @@ const SleepLogs = () => {
 
       <div className="container">
         <section className="section-card tracker-hero animate delay-1">
-          <div>
-            <h1>Sleep Logs</h1>
-            <p>See how your sleep adds up and keep a steady bedtime routine.</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', width: '100%' }}>
+            <button
+              onClick={() => navigate(-1)}
+              style={{
+                padding: '0.5rem 1rem',
+                background: '#f0f0f0',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                fontWeight: '500'
+              }}
+            >
+              ← Back
+            </button>
+            <div>
+              <h1>Sleep Logs</h1>
+              <p>See how your sleep adds up and keep a steady bedtime routine.</p>
+            </div>
+            <button
+              type="button"
+              className="ghost-btn"
+              onClick={() => navigate('/add-sleep')}
+              style={{ whiteSpace: 'nowrap', marginLeft: 'auto' }}
+            >
+              + Add Sleep Log
+            </button>
           </div>
         </section>
 
-        <section className="section-card animate delay-2" style={{ 
-          background: 'white', 
-          padding: '2.5rem', 
-          borderRadius: '20px', 
-          boxShadow: '0 4px 20px rgba(0,0,0,0.08)', 
-          maxWidth: '700px', 
-          margin: '0 auto 2rem auto',
-          border: '1px solid rgba(10, 61, 61, 0.08)'
-        }}>
-          <h3 style={{ marginBottom: '2rem', textAlign: 'center', fontSize: '1.5rem', fontWeight: '700', color: '#0a3d3d' }}>Log Your Sleep</h3>
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Sleep Duration (hours)</label>
-              <input
-                type="number"
-                name="duration"
-                value={formData.duration}
-                onChange={handleInputChange}
-                required
-                min="0"
-                max="24"
-                step="0.5"
-                placeholder="e.g., 7.5"
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
-              />
-            </div>
-            
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Notes (optional)</label>
-              <textarea
-                name="notes"
-                value={formData.notes}
-                onChange={handleInputChange}
-                placeholder="Sleep quality, hydration habits, or any observations..."
-                rows="3"
-                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem', resize: 'vertical' }}
-              />
-            </div>
-            
-            <button type="submit" className="ghost-btn" style={{ 
-              marginTop: '1rem', 
-              width: '100%', 
-              padding: '0.875rem',
-              fontSize: '1rem',
-              fontWeight: '600'
-            }}>
-              Log Sleep
-            </button>
-          </form>
-        </section>
-
-        {showCharts && (
+        {hasLogs && (
           <>
             <section className="section-card tracker-grid animate delay-3">
               <div className="stat-tile">
@@ -222,10 +254,26 @@ const SleepLogs = () => {
                   {sleepLogs.map((log, index) => (
                     <li key={index} className="log-row">
                       <div>
-                        <strong>{log.date}</strong>
+                        <strong>{formatLogDate(log)}</strong>
                         <div className="stat-sub">{log.notes || 'No notes'}</div>
                       </div>
-                      <span className="badge">{log.duration} hrs</span>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <span className="badge">{log.durationHours} hrs</span>
+                        <button
+                          onClick={() => handleDeleteLog(index)}
+                          style={{
+                            padding: '0.4rem 0.8rem',
+                            backgroundColor: '#ff6b6b',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '0.85rem'
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>
