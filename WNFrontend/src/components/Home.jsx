@@ -523,9 +523,10 @@ const Home = () => {
       <nav className="navbar">
         <button className="navbar-brand" onClick={() => handleTrackerNavigation('/home')}>WellNest</button>
         <div className="navbar-options">
-          <button className="navbar-nav-btn" onClick={() => handleTrackerNavigation('/diet-planner')}>Diet Planner</button>
-          <button className="navbar-nav-btn" onClick={() => handleTrackerNavigation('/workout-planner')}>Workout Planner</button>
-          <button className="navbar-nav-btn" onClick={() => handleTrackerNavigation('/chat')}>Health Chat</button>
+          <button className="navbar-nav-btn" onClick={() => handleTrackerNavigation('/home')}>🏠 Home</button>
+          <button className="navbar-nav-btn" onClick={() => handleTrackerNavigation('/diet-planner')}>🍽️ Diet Planner</button>
+          <button className="navbar-nav-btn" onClick={() => handleTrackerNavigation('/workout-planner')}>💪 Workout Planner</button>
+          <button className="navbar-nav-btn" onClick={() => handleTrackerNavigation('/chat')}>💬 Health Chat</button>
         </div>
 
         <div className="navbar-user">
