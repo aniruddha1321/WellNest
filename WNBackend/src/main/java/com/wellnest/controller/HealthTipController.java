@@ -37,20 +37,4 @@ public class HealthTipController {
         return ResponseEntity.ok(result);
     }
 
-    /**
-     * Get health tips for the home page
-     * Supports multiple categories: general, nutrition, exercise, sleep, mental-health
-     */
-    @GetMapping("/home")
-    public ResponseEntity<Map<String, Object>> getHomeHealthTip(
-            @RequestParam(defaultValue = "general") String category) {
-        
-        HealthTip healthTip = geminiService.generateHealthTipWithImage(category);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", true);
-        result.put("data", healthTip);
-        
-        return ResponseEntity.ok(result);
-    }
 }
