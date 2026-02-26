@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { profileService } from '../services/api'
+import Navbar from './Navbar'
 import './Home.css'
 
 const Profile = () => {
@@ -129,39 +130,7 @@ const Profile = () => {
 
   return (
     <div className="home-container">
-      <nav className="navbar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div className="navbar-brand">🏥 WellNest</div>
-          <button
-            onClick={handleHomeClick}
-            style={{
-              padding: '0.5rem 1rem',
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '1.2rem',
-              fontWeight: '500',
-              color: '#333',
-              transition: 'all 0.3s ease'
-            }}
-            onMouseEnter={(e) => e.target.style.color = '#0ea5a6'}
-            onMouseLeave={(e) => e.target.style.color = '#333'}
-          >
-            🏠 Home
-          </button>
-        </div>
-        <div className="navbar-user">
-          <button className="user-info-btn" onClick={handleHomeClick}>
-            <span className="user-info">
-              <span className="user-avatar">{getUserInitial()}</span>
-              <span>{user?.fullName}</span>
-            </span>
-          </button>
-          <button className="logout-btn" onClick={handleLogout}>
-            Logout
-          </button>
-        </div>
-      </nav>
+      <Navbar />
 
       <div className="container">
         <div className="profile-section section-card animate delay-1">
