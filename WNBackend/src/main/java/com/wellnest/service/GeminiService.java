@@ -4,10 +4,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import io.github.cdimascio.dotenv.Dotenv;
+
 
 import com.wellnest.model.HealthTip;
-import io.github.cdimascio.dotenv.Dotenv;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -21,8 +21,8 @@ public class GeminiService {
     private final RestTemplate restTemplate = new RestTemplate();
 
 
-    private static final Dotenv dotenv = Dotenv.load();
-    private static final String API_KEY = dotenv.get("GEMINI_API_KEY");
+    @Value("${gemini.api.key:Enter_your_api}")
+    private String API_KEY;
 
 
     private final Random random = new Random();
