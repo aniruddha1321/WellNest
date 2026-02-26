@@ -518,6 +518,65 @@ const Home = () => {
     }
   }
 
+  // Health Calculators
+  const calculateBMI = () => {
+    if (profile?.height && profile?.weight) {
+      const heightInMeters = profile.height / 100
+      const bmi = profile.weight / (heightInMeters * heightInMeters)
+      return bmi.toFixed(1)
+    }
+    return null
+  }
+
+  const getBMICategory = (bmi) => {
+    if (!bmi) return 'Not Available'
+    const bmiValue = parseFloat(bmi)
+    if (bmiValue < 18.5) return 'Underweight'
+    if (bmiValue < 25) return 'Normal'
+    if (bmiValue < 30) return 'Overweight'
+    return 'Obese'
+  }
+
+  const calculateBMR = () => {
+    if (profile?.weight && profile?.height && profile?.age && profile?.gender) {
+      let bmr
+      if (profile.gender?.toLowerCase() === 'male') {
+        bmr = 88.362 + (13.397 * profile.weight) + (4.799 * profile.height) - (5.677 * profile.age)
+      } else {
+        bmr = 447.593 + (9.247 * profile.weight) + (3.098 * profile.height) - (4.330 * profile.age)
+      }
+      return Math.round(bmr)
+    }
+    return null
+  }
+
+  const calculateIdealWeight = () => {
+    if (profile?.height && profile?.gender) {
+      const heightInCm = profile.height
+      let idealWeight
+      if (profile.gender?.toLowerCase() === 'male') {
+        idealWeight = 50 + 0.91 * (heightInCm - 152.4)
+      } else {
+        idealWeight = 45.5 + 0.91 * (heightInCm - 152.4)
+      }
+      return `${Math.round(idealWeight - 5)}-${Math.round(idealWeight + 5)} kg`
+    }
+    return 'N/A'
+  }
+
+  const calculateWaterIntakeGoal = () => {
+    if (profile?.weight) {
+      const waterInLiters = (profile.weight * 0.033).toFixed(1)
+      return `${waterInLiters} L`
+    }
+    return '2-3 L'
+  }
+
+  const bmi = calculateBMI()
+  const bmr = calculateBMR()
+  const idealWeight = calculateIdealWeight()
+  const waterGoal = calculateWaterIntakeGoal()
+
   return (
     <div className="home-container">
       <nav className="navbar">
@@ -835,21 +894,29 @@ const Home = () => {
 
 
         <div className="stats-section section-card animate delay-6">
-          <div className="stat-card">
-            <div className="stat-number">0</div>
-            <div className="stat-label">Workouts This Week</div>
+          <div className="stat-card health-calc">
+            <div className="stat-icon">⚖️</div>
+            <div className="stat-number">{bmi || '--'}</div>
+            <div className="stat-label">BMI</div>
+            <div className="stat-category">{getBMICategory(bmi)}</div>
           </div>
-          <div className="stat-card">
-            <div className="stat-number">0</div>
-            <div className="stat-label">Calories Burned</div>
+          <div className="stat-card health-calc">
+            <div className="stat-icon">🔥</div>
+            <div className="stat-number">{bmr || '--'}</div>
+            <div className="stat-label">BMR (cal/day)</div>
+            <div className="stat-sublabel">Basal Metabolic Rate</div>
           </div>
-          <div className="stat-card">
-            <div className="stat-number">0</div>
-            <div className="stat-label">Hours Slept</div>
+          <div className="stat-card health-calc">
+            <div className="stat-icon">🎯</div>
+            <div className="stat-number">{idealWeight}</div>
+            <div className="stat-label">Ideal Weight</div>
+            <div className="stat-sublabel">Recommended Range</div>
           </div>
-          <div className="stat-card">
-            <div className="stat-number">0</div>
-            <div className="stat-label">Wellness Score</div>
+          <div className="stat-card health-calc">
+            <div className="stat-icon">💧</div>
+            <div className="stat-number">{waterGoal}</div>
+            <div className="stat-label">Daily Water Goal</div>
+            <div className="stat-sublabel">Based on Body Weight</div>
           </div>
         </div>
       </div>
